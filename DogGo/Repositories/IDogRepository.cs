@@ -9,5 +9,7 @@ namespace DogGo.Repositories
         List<Dog> GetAllDogs();
         Dog GetDogById(int id);
         void UpdateDog(Dog dog);
+
+        void AddDog(Dog dog);
     }
 }
