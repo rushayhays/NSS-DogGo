@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Authorization;
 using System.Security.Claims;
 using DogGo.Repositories;
 using DogGo.Models;
@@ -11,6 +12,7 @@ namespace DogGo.Controllers
     public class DogsController : Controller
     {
         // GET: DogsController
+        [Authorize]
         public ActionResult Index()
         {
             int ownerId = GetCurrentUserId();
@@ -30,14 +32,18 @@ namespace DogGo.Controllers
         }
 
         private readonly IDogRepository _dogRepo;
+        private readonly IOwnerRepository _ownerRepo;
 
         // ASP.NET will give us an instance of our Dog Repository. This is called "Dependency Injection"
-        public DogsController(IDogRepository dogRepository)
+        public DogsController(IDogRepository dogRepository, IOwnerRepository ownerRepo)
         {
             _dogRepo = dogRepository;
+            _ownerRepo = ownerRepo;
         }
 
+
         // GET: DogsController/Create
+        [Authorize]
         public ActionResult Create()
         {
             return View();
@@ -62,9 +68,16 @@ namespace DogGo.Controllers
         }
 
         // GET: DogsController/Edit/5
+        [Authorize]
         public ActionResult Edit(int id)
         {
+            int ownerId = GetCurrentUserId();
             Dog dog = _dogRepo.GetDogById(id);
+            
+            if(dog.OwnerId != ownerId)
+            {
+                return NotFound();
+            }
             if(dog == null)
             {
                 return NotFound();
@@ -89,9 +102,20 @@ namespace DogGo.Controllers
         }
 
         // GET: DogsController/Delete/5
+        [Authorize]
         public ActionResult Delete(int id)
         {
+            int ownerId = GetCurrentUserId();
             Dog dog = _dogRepo.GetDogById(id);
+
+            if (dog.OwnerId != ownerId)
+            {
+                return NotFound();
+            }
+            if (dog == null)
+            {
+                return NotFound();
+            }
             return View(dog);
         }
 
