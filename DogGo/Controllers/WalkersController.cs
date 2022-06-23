@@ -56,10 +56,7 @@ namespace DogGo.Controllers
         }
 
         // GET: WalkersController/Create
-        public ActionResult Create()
-        {
-            return View();
-        }
+        
 
         private readonly IWalkerRepository _walkerRepo;
         private readonly IWalkRepository _walkRepo;
@@ -72,19 +69,24 @@ namespace DogGo.Controllers
             _walkRepo = walkRepository;
             _ownerRepo = ownerRepo;
         }
+        public ActionResult Create()
+        {
+            return View();
+        }
 
         // POST: WalkersController/Create
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public ActionResult Create(IFormCollection collection)
+        public ActionResult Create(Walker walker)
         {
             try
             {
-                return RedirectToAction(nameof(Index));
+                _walkerRepo.AddWalker(walker);
+                return RedirectToAction("Index");
             }
-            catch
+            catch(Exception ex)
             {
-                return View();
+                return View(walker);
             }
         }
 

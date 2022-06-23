@@ -2,6 +2,7 @@
 using Microsoft.Data.SqlClient;
 using Microsoft.Extensions.Configuration;
 using System.Collections.Generic;
+using System;
 
 namespace DogGo.Repositories
 {
@@ -41,15 +42,26 @@ namespace DogGo.Repositories
                         List<Walker> walkers = new List<Walker>();
                         while (reader.Read())
                         {
+                            string image = "";
+                            if (reader.IsDBNull(reader.GetOrdinal("ImageUrl")) )
+                            {
+                                image = "https ://avatars.dicebear.com/api/personas/.svg";
+                            }
+                            else
+                            {
+                                image = reader.GetString(reader.GetOrdinal("ImageUrl"));
+                            }
                             Walker walker = new Walker
                             {
                                 Id = reader.GetInt32(reader.GetOrdinal("Id")),
                                 Name = reader.GetString(reader.GetOrdinal("Name")),
-                                ImageUrl = reader.GetString(reader.GetOrdinal("ImageUrl")),
+
                                 Neighborhood = new Neighborhood
                                 {
                                     Name = reader.GetString(reader.GetOrdinal("NeName"))
-                                }
+                                },
+                                ImageUrl = image
+                            
                             };
 
                             walkers.Add(walker);
@@ -137,6 +149,39 @@ namespace DogGo.Repositories
 
                         return walkers;
                     }
+                }
+            }
+        }
+
+        public void AddWalker(Walker walker)
+        {
+            using (SqlConnection conn = Connection)
+            {
+                conn.Open();
+                using (SqlCommand cmd = conn.CreateCommand())
+                {
+                    cmd.CommandText = @"
+                        INSERT INTO Walker ([Name], NeighborhoodId, ImageUrl)
+                        OUTPUT INSERTED.ID
+                        VALUES (@name, @neighborhoodId, @imageUrl);
+                    ";
+
+                    cmd.Parameters.AddWithValue("@name", walker.Name);
+                    cmd.Parameters.AddWithValue("@neighborhoodId", walker.NeighborhoodId);
+
+                    // nullable columns
+                    if (walker.ImageUrl == null)
+                    {
+                        cmd.Parameters.AddWithValue("@imageUrl", DBNull.Value);
+                    }
+                    else
+                    {
+                        cmd.Parameters.AddWithValue("@imageUrl", walker.ImageUrl);
+                    }
+
+                    int id = (int)cmd.ExecuteScalar();
+
+                    walker.Id = id;
                 }
             }
         }
