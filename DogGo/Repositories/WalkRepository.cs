@@ -23,6 +23,8 @@ namespace DogGo.Repositories
             }
         }
 
+        //This method is for getting a list of walks to display in a walkers profile page
+        //Notice this grabs and sets a Client
         public List<Walk> GetAllWalks()
         {
             using (SqlConnection conn = Connection)
@@ -50,6 +52,52 @@ namespace DogGo.Repositories
                                 Duration = reader.GetInt32(reader.GetOrdinal("Duration")),
                                 WalkerId = reader.GetInt32(reader.GetOrdinal("WalkerId")),
                                 DogId = reader.GetInt32(reader.GetOrdinal("DogId"))
+                            };
+
+                            walks.Add(walk);
+                        }
+
+                        return walks;
+                    }
+                }
+            }
+        }
+
+        //This will return a slightly differnt shaped walk
+        public List<Walk> GetAllWalksForIndex()
+        {
+            using (SqlConnection conn = Connection)
+            {
+                conn.Open();
+                using (SqlCommand cmd = conn.CreateCommand())
+                {
+                    cmd.CommandText = @"
+                        SELECT Walks.Id, Date, Duration, Dog.Name As DogName, Walker.Name as WalkerName, Walker.Id as WId, Dog.Id as DId 
+                        FROM Walks
+                        LEFT JOIN Dog on Dog.Id = Walks.DogId
+                        LEFT JOIN Walker on Walker.Id = Walks.WalkerId;
+                    ";
+
+                    using (SqlDataReader reader = cmd.ExecuteReader())
+                    {
+                        List<Walk> walks = new List<Walk>();
+                        while (reader.Read())
+                        {
+                            Walk walk = new Walk
+                            {
+                                Id = reader.GetInt32(reader.GetOrdinal("Id")),
+                                Date = reader.GetDateTime(reader.GetOrdinal("Date")),
+                                Duration = reader.GetInt32(reader.GetOrdinal("Duration")),
+                                Walker = new Walker
+                                {
+                                    Id = reader.GetInt32(reader.GetOrdinal("WId")),
+                                    Name = reader.GetString(reader.GetOrdinal("WalkerName")),
+                                },
+                                Dog = new Dog
+                                {
+                                    Id = reader.GetInt32(reader.GetOrdinal("DId")),
+                                    Name = reader.GetString(reader.GetOrdinal("DogName"))
+                                }
                             };
 
                             walks.Add(walk);

@@ -11,7 +11,7 @@ namespace DogGo.Controllers
         // GET: WalksController
         public ActionResult Index()
         {
-            List<Walk> walks = _walkRepo.GetAllWalks();
+            List<Walk> walks = _walkRepo.GetAllWalksForIndex();
             return View(walks);
         }
 
